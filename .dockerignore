@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+downloads/
+test_thumb/
+test_out.webp
+*.mp4
+*.mp3
+*.zip

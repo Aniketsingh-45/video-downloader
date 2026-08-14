@@ -339,6 +339,7 @@ async def get_media_info(request: MediaRequest):
                 "sizes": {"zip": f"{count} items"},
                 "entries": clean_entries,
                 "media_type": "carousel",
+                "url": info.get("url") or "",
             }
 
         media_type = _detect_media_type(info)
@@ -351,6 +352,7 @@ async def get_media_info(request: MediaRequest):
             "platform": platform,
             "sizes": estimate_sizes(formats, info),
             "media_type": media_type,
+            "url": info.get("url") or "",
         }
     except HTTPException:
         raise
@@ -376,7 +378,7 @@ def _download_single_item(entry: dict, dest_dir: str, prefix: str, task_id: str 
         if entry_url:
             vid_opts = {
                 "outtmpl": os.path.join(dest_dir, f"{safe_title}.%(ext)s"),
-                "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "format": "bestvideo+bestaudio/best",
                 "quiet": True,
                 "no_warnings": True,
                 "noplaylist": True,
@@ -384,6 +386,8 @@ def _download_single_item(entry: dict, dest_dir: str, prefix: str, task_id: str 
                 "merge_output_format": "mp4",
                 "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
                 "logger": QuietLogger(),
+                "skip_download": False,
+                "writethumbnail": False,
             }
             try:
                 with yt_dlp.YoutubeDL(vid_opts) as ydl:
@@ -582,7 +586,7 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
         ext = "mp4"
         opts = {
             "outtmpl": outtmpl_path,
-            "format": get_format_string(quality),
+            "format": "bestvideo+bestaudio/best",
             "quiet": True,
             "no_warnings": True,
             "merge_output_format": ext,
@@ -592,6 +596,8 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
             "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
             "progress_hooks": [hook],
             "logger": QuietLogger(),
+            "skip_download": False,
+            "writethumbnail": False,
         }
 
     # For carousel item video download, we need playlist mode
