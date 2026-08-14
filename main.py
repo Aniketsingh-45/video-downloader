@@ -161,13 +161,16 @@ def get_format_string(quality: str) -> str:
 
 
 def friendly_error(message: str) -> str:
+    print(f"DOWNLOAD ERROR: {message}")
     if "Unsupported URL" in message:
         return "That link is not supported. Try YouTube, Instagram, or Facebook."
     if "Video unavailable" in message or "Private video" in message:
         return "That video is unavailable or private."
     if "Sign in" in message or "login" in message.lower():
         return "This content needs a login. Only public videos can be saved."
-    return "Something went wrong. Check the link and try again."
+    if "HTTP Error 403" in message:
+        return "Access denied by the platform. The content might be private or require a login."
+    return f"Download failed: {message[:100]}..."
 
 
 # ---------------------------------------------------------------- info ------
@@ -342,7 +345,7 @@ def _download_worker(task_id: str, url: str, quality: str) -> None:
     try:
         _update_task(task_id, message="Starting download…")
         with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+            info = ydl.extract_info(url, download=(quality != "photo"))
         info = info or {}
 
         output_path = None
@@ -371,7 +374,20 @@ def _download_worker(task_id: str, url: str, quality: str) -> None:
                     if fallback_ext.lower() not in ("jpg", "jpeg", "png", "webp", "gif"):
                         fallback_ext = "jpg"
                     output_path = os.path.join(DOWNLOAD_DIR, f"{task_id}.{fallback_ext}")
-                    req = urllib.request.Request(image_url, headers={'User-Agent': 'Mozilla/5.0'})
+                    
+                    found_headers = None
+                    for fmt in (info.get("formats") or []):
+                        if fmt.get("url") == image_url and fmt.get("http_headers"):
+                            found_headers = fmt.get("http_headers")
+                            break
+                    if not found_headers:
+                        for thumb in (info.get("thumbnails") or []):
+                            if thumb.get("url") == image_url and thumb.get("http_headers"):
+                                found_headers = thumb.get("http_headers")
+                                break
+                    headers = found_headers or info.get("http_headers") or {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                    
+                    req = urllib.request.Request(image_url, headers=headers)
                     with urllib.request.urlopen(req) as response, open(output_path, 'wb') as out_file:
                         shutil.copyfileobj(response, out_file)
                 else:
@@ -380,10 +396,10 @@ def _download_worker(task_id: str, url: str, quality: str) -> None:
                 raise RuntimeError("The downloaded file could not be found.")
 
         actual_ext = output_path.split(".")[-1]
-        title = (info.get("title") or "video").strip()
+        title = (info.get("title") or ("photo" if quality == "photo" else "video")).strip()
         safe_title = re.sub(r"[^\w\s\-]", "", title).strip()[:50].strip()
         if not safe_title:
-            safe_title = "video"
+            safe_title = "photo" if quality == "photo" else "video"
             
         filename = f"{safe_title}.{actual_ext}"
 
@@ -456,7 +472,15 @@ async def get_file(task_id: str, background_tasks: BackgroundTasks):
         _cleanup_task(task_id)
 
     background_tasks.add_task(cleanup)
-    media = "audio/mp4" if str(task["filename"]).endswith(".m4a") else "video/mp4"
+    filename = str(task["filename"]).lower()
+    if filename.endswith(".m4a") or filename.endswith(".mp3"):
+        media = "audio/mpeg"
+    elif filename.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif")):
+        media = f"image/{filename.split('.')[-1].replace('jpg', 'jpeg')}"
+    elif filename.endswith(".zip"):
+        media = "application/zip"
+    else:
+        media = "video/mp4"
     return FileResponse(
         task["filepath"], filename=task["filename"], media_type=media
     )

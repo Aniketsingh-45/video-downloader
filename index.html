@@ -671,8 +671,13 @@ async function fetchInfo() {
       thumb.removeAttribute('src');
     }
 
-    $('title').textContent = data.title || 'Untitled video';
-    $('duration').textContent = duration(data.duration);
+    const isPhoto = !!data.sizes.photo && !data.sizes.best && !data.sizes['1080p'];
+    
+    let titleStr = data.title || 'Untitled video';
+    if (isPhoto && titleStr === 'Untitled video') titleStr = 'Photo Post';
+    $('title').textContent = titleStr;
+    
+    $('duration').textContent = isPhoto ? 'PHOTO' : duration(data.duration);
     $('uploader').textContent = data.uploader || '';
     $('uploader').style.display = data.uploader ? '' : 'none';
 
