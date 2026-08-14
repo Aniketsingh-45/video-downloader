@@ -3,7 +3,7 @@
   
   # ✨ MySaver ✨
   
-  **Premium Video & Audio Downloader**
+  **All-In-One Media Downloader — Videos, Photos & Posts**
   
   [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
   [![yt-dlp](https://img.shields.io/badge/yt--dlp-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
@@ -12,15 +12,19 @@
 
 <br/>
 
-MySaver is a **FastAPI + yt-dlp** powered downloader for public YouTube, Instagram, and Facebook videos. It features a beautiful, animated, and responsive glassmorphism frontend with live download progress. 
+MySaver is a **FastAPI + yt-dlp** powered all-in-one media downloader. Download **videos, photos, reels, carousels, and posts** from YouTube, Instagram, and Facebook — all from a single, beautiful, glassmorphism UI with live progress tracking.
 
-The backend elegantly serves both the REST API and the frontend (`index.html`), streamlining your workflow.
+### 🎯 Key Features
+- 🎬 **Video Downloads** — From 144p to 4K Ultra HD
+- 📷 **Photo & Post Downloads** — Single images and carousel/multi-photo posts
+- 🎵 **Audio Extraction** — Extract MP3 audio from any video
+- 📦 **Carousel/Multi-Photo ZIP** — Download all photos from a post at once
+- ⚡ **Individual Item Downloads** — Pick specific items from a carousel
+- 🎨 **Premium Animated UI** — Glassmorphism, gradient animations, confetti effects
 
 ---
 
-## 🚀 Quick Start (Backend + Frontend)
-
-The fastest way to get up and running:
+## 🚀 Quick Start
 
 ```powershell
 # 1. Create and activate a virtual environment
@@ -43,49 +47,37 @@ uvicorn main:app --reload
 
 ---
 
-## 🎨 Standalone Frontend (Optional)
-
-The frontend is a pristine, zero-build-step `index.html`. While FastAPI serves it perfectly, you can run it via VS Code Live Server or Python's HTTP server:
-
-```powershell
-python -m http.server 5500
-```
-
-> **Tip:** If serving on a different port than the backend, remember to update `API_BASE` in the `<script>` tag inside `index.html` to point to your backend (e.g., `http://localhost:8000`).
-
----
-
 ## 🔌 API Reference
 
 | Method | Endpoint | Payload | Description |
 | :--- | :--- | :--- | :--- |
-| **`POST`** | `/api/info` | `{ "url": "..." }` | Fetch media metadata (title, thumbnail, duration, available sizes). |
-| **`POST`** | `/api/download` | `{ "url": "...", "quality": "best" }` | Initiate download. Returns a unique `task_id`. |
+| **`POST`** | `/api/info` | `{ "url": "..." }` | Fetch media metadata (title, thumbnail, duration, available sizes, media type). |
+| **`POST`** | `/api/download` | `{ "url": "...", "quality": "best", "playlist_item": null }` | Initiate download. Set `playlist_item` (1-indexed) for individual carousel items. Returns `task_id`. |
 | **`GET`** | `/api/progress/{task_id}` | — | Poll for real-time download progress (%). |
 | **`GET`** | `/api/file/{task_id}` | — | Retrieve the final downloaded file. |
 
-**Available Qualities:** `best`, `4k`, `1440p`, `1080p`, `720p`, `480p`, `360p`, `240p`, `144p`, `audio`.
+**Available Qualities:** `best`, `4k`, `1440p`, `1080p`, `720p`, `480p`, `360p`, `240p`, `144p`, `audio`, `photo`, `zip`.
 
 ---
 
 ## ☁️ Deployment
 
-Deploy effortlessly to platforms like Railway, Render, or Heroku. Use this start command:
+Deploy effortlessly to platforms like Railway, Render, or Heroku:
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-*Because the UI and API share a single domain, no complex CORS or frontend configuration is needed!*
+*The UI and API share a single domain — no CORS or frontend configuration needed!*
 
 ---
 
 ## ⚠️ Important Notes
 
-- **FFmpeg:** Some high-quality formats require [FFmpeg](https://ffmpeg.org/download.html) to be installed and added to your system `PATH` to merge video and audio streams.
-- **Playlists:** Currently disabled (`noplaylist`). Designed for single videos.
-- **Privacy:** Private, login-protected, or geo-restricted content cannot be downloaded.
-- **Responsibility:** Only download content you own or have explicit permission to use. Server files are automatically cleared 5 minutes post-download.
+- **FFmpeg:** Required for merging video+audio streams and MP3 extraction. Install from [ffmpeg.org](https://ffmpeg.org/download.html) and add to `PATH`.
+- **Instagram:** Only public posts can be downloaded. Private/login-required content is not supported.
+- **Responsibility:** Only download content you own or have permission to use.
+- **Cleanup:** Server files are automatically deleted 5 minutes after download.
 
 ---
 

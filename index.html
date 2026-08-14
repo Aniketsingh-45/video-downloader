@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MySaver — Premium Video & Audio Downloader</title>
+<title>MySaver — Premium Media Downloader | Videos, Photos & Posts</title>
+<meta name="description" content="Download videos, photos, and posts from YouTube, Instagram, and Facebook. Choose quality from 4K to MP3 and download instantly.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -132,7 +134,7 @@
   }
   @keyframes gradientFlow { to { background-position: 200% center; } }
   .hero p {
-    font-size: 18px; color: var(--text-muted); max-width: 580px; margin: 0 auto; line-height: 1.6;
+    font-size: 18px; color: var(--text-muted); max-width: 600px; margin: 0 auto; line-height: 1.6;
   }
 
   .supported-platforms {
@@ -146,8 +148,19 @@
     transition: all 0.3s;
   }
   .plat-pill:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-3px); }
-  .plat-yt i { color: #ff0000; } .plat-ig i { color: #e1306c; } .plat-fb i { color: #1877f2; }
   .plat-pill svg { width: 16px; height: 16px; }
+
+  /* ---------- Content Type Pills ---------- */
+  .content-types {
+    margin-top: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+  }
+  .type-pill {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    padding: 5px 14px; border-radius: 100px;
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .type-pill svg { width: 14px; height: 14px; opacity: 0.7; }
 
   /* ---------- Glassmorphism Panel ---------- */
   .glass-panel {
@@ -225,10 +238,13 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Qualities */
+  .quality-section { display: none; }
+  .quality-section.visible { display: block; animation: fadeUp 0.4s; }
   .section-title {
     font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--text-muted); margin: 32px 0 16px; display: block;
+    color: var(--text-muted); margin: 32px 0 16px; display: flex; align-items: center; gap: 8px;
   }
+  .section-title .media-type-icon { width: 16px; height: 16px; opacity: 0.6; }
   .grid-qualities {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px;
   }
@@ -255,6 +271,7 @@
   }
   .q-badge.pro { background: linear-gradient(135deg, var(--cyan), #0088ff); color: #000; }
   .q-badge.music { background: linear-gradient(135deg, #ff9a9e, #fecfef); color: #000; }
+  .q-badge.img { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
   
   .q-name { display: block; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
   .q-size { display: inline-block; font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; }
@@ -271,6 +288,8 @@
     width: 240px; flex: none; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9;
     position: relative; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
   }
+  .thumb-container.photo-mode { aspect-ratio: 1/1; }
+  .thumb-container.hidden { display: none; }
   .thumb-container img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
   .thumb-container img.loaded { opacity: 1; }
   .skeleton-bg {
@@ -284,7 +303,61 @@
     backdrop-filter: blur(4px); color: #fff; font-size: 12px; font-family: var(--font-mono);
     padding: 4px 8px; border-radius: 6px; font-weight: 500;
   }
+  .dur-badge.photo-badge { background: linear-gradient(135deg, var(--violet), var(--pink)); font-family: var(--font-sans); font-weight: 700; }
   
+  /* Carousel */
+  .carousel-grid {
+    display: flex; gap: 16px; margin-top: 24px;
+    overflow-x: auto; padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .carousel-grid::-webkit-scrollbar { height: 6px; }
+  .carousel-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+  .carousel-grid.hidden { display: none !important; }
+  .carousel-item {
+    flex: 0 0 160px; scroll-snap-align: start;
+    position: relative; border-radius: 16px; overflow: hidden;
+    aspect-ratio: 1/1; background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .carousel-item:hover {
+    transform: translateY(-4px); box-shadow: 0 8px 24px rgba(132, 61, 255, 0.4);
+    border-color: var(--violet-bright);
+  }
+  .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+  .carousel-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 4px 8px; border-radius: 6px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .carousel-badge svg { width: 10px; height: 10px; }
+  .carousel-index {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(132, 61, 255, 0.8); backdrop-filter: blur(4px);
+    color: #fff; font-size: 11px; font-weight: 800;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: grid; place-items: center;
+  }
+  .carousel-dl-btn {
+    position: absolute; bottom: 8px; right: 8px;
+    background: var(--success); color: #000;
+    border: none; border-radius: 50%;
+    width: 36px; height: 36px; display: grid; place-items: center;
+    cursor: pointer; opacity: 0; transform: translateY(10px);
+    transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,255,136,0.3);
+  }
+  .carousel-item:hover .carousel-dl-btn { opacity: 1; transform: translateY(0); }
+  .carousel-dl-btn:hover { background: #fff; box-shadow: 0 4px 12px rgba(255,255,255,0.4); }
+  .carousel-count {
+    text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-muted);
+    font-weight: 500;
+  }
+
   .meta-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
   .meta-title {
     font-size: clamp(18px, 3vw, 22px); font-weight: 700; color: #fff; line-height: 1.3;
@@ -298,6 +371,14 @@
   .plat-tag.youtube { background: #ff0000; }
   .plat-tag.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
   .plat-tag.facebook { background: #1877f2; }
+  .media-type-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 100px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .media-type-tag.video { background: rgba(132, 61, 255, 0.2); color: var(--violet-bright); border: 1px solid rgba(132, 61, 255, 0.3); }
+  .media-type-tag.image { background: rgba(255, 42, 133, 0.2); color: var(--pink); border: 1px solid rgba(255, 42, 133, 0.3); }
+  .media-type-tag.carousel { background: rgba(0, 229, 255, 0.2); color: var(--cyan); border: 1px solid rgba(0, 229, 255, 0.3); }
+  .media-type-tag svg { width: 12px; height: 12px; }
   .author-tag { font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
   .author-tag::before { content: ''; width: 4px; height: 4px; background: #666; border-radius: 50%; }
 
@@ -395,6 +476,10 @@
     .brand { font-size: 20px; }
     .brand-logo { width: 32px; height: 32px; border-radius: 10px; }
     .safe-badge { font-size: 11px; padding: 6px 12px; }
+    .carousel-item { flex: 0 0 120px; }
+    .carousel-dl-btn { opacity: 1; transform: none; width: 28px; height: 28px; }
+    .content-types { gap: 6px; }
+    .type-pill { font-size: 11px; padding: 4px 10px; }
   }
 </style>
 </head>
@@ -413,20 +498,26 @@
       <img src="logo.jpg" alt="MySaver Logo" class="brand-logo">
       MySaver
     </a>
-    <div class="safe-badge"><i></i>100% Safe & Secure</div>
+    <div class="safe-badge"><i></i>100% Safe &amp; Secure</div>
   </div>
 </nav>
 
 <main class="container">
   <section class="hero">
-    <div class="tagline">Premium Downloader</div>
-    <h1>Save videos with<br><span>zero quality loss.</span></h1>
-    <p>Paste a link from YouTube, Instagram, or Facebook. Choose your desired format (from 4K video to MP3 audio) and download instantly.</p>
+    <div class="tagline">All-In-One Media Saver</div>
+    <h1>Save any media with<br><span>zero quality loss.</span></h1>
+    <p>Paste a link from YouTube, Instagram, or Facebook. Download videos, photos, reels, and posts instantly in your preferred quality.</p>
     
     <div class="supported-platforms">
       <div class="plat-pill plat-yt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YouTube</div>
       <div class="plat-pill plat-ig"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> Instagram</div>
       <div class="plat-pill plat-fb"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Facebook</div>
+    </div>
+    <div class="content-types">
+      <div class="type-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Videos</div>
+      <div class="type-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photos</div>
+      <div class="type-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="2" x2="8" y2="22"/></svg> Posts</div>
+      <div class="type-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Audio</div>
     </div>
   </section>
 
@@ -434,7 +525,7 @@
     <div class="input-group">
       <div class="input-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
-        <input id="url" class="url-input" type="url" placeholder="Paste media link here..." autocomplete="off" spellcheck="false">
+        <input id="url" class="url-input" type="url" placeholder="Paste any media link here..." autocomplete="off" spellcheck="false">
       </div>
       <button class="btn btn-primary" id="infoBtn">
         <span class="btn-text">Analyze Link</span>
@@ -442,53 +533,55 @@
       </button>
     </div>
 
-    <span class="section-title">Select Quality</span>
-    <div class="grid-qualities">
-      <button class="q-card" data-quality="4k">
-        <span class="q-badge pro">Ultra</span>
-        <span class="q-name">4K</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="1440p">
-        <span class="q-name">1440p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="1080p">
-        <span class="q-name">1080p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card active" data-quality="best">
-        <span class="q-badge">Best</span>
-        <span class="q-name">Smart</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="720p">
-        <span class="q-name">720p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="480p">
-        <span class="q-name">480p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="360p">
-        <span class="q-name">360p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="240p">
-        <span class="q-name">240p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="144p">
-        <span class="q-name">144p</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="audio">
-        <span class="q-badge music">Audio</span>
-        <span class="q-name">MP3</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="photo" style="display:none;">
-        <span class="q-badge pro">Image</span>
-        <span class="q-name">Photo</span><span class="q-size">--</span>
-      </button>
-      <button class="q-card" data-quality="zip" style="display:none;">
-        <span class="q-badge">Zip</span>
-        <span class="q-name">Playlist</span><span class="q-size">--</span>
-      </button>
+    <div id="quality-section" class="quality-section">
+      <span class="section-title" id="quality-label">Select Quality</span>
+      <div class="grid-qualities">
+        <button class="q-card" data-quality="4k">
+          <span class="q-badge pro">Ultra</span>
+          <span class="q-name">4K</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="1440p">
+          <span class="q-name">1440p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="1080p">
+          <span class="q-name">1080p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card active" data-quality="best">
+          <span class="q-badge">Best</span>
+          <span class="q-name">Smart</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="720p">
+          <span class="q-name">720p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="480p">
+          <span class="q-name">480p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="360p">
+          <span class="q-name">360p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="240p">
+          <span class="q-name">240p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="144p">
+          <span class="q-name">144p</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="audio" style="display:none;">
+          <span class="q-badge music">Audio</span>
+          <span class="q-name">MP3</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="photo" style="display:none;">
+          <span class="q-badge img">Image</span>
+          <span class="q-name">Photo</span><span class="q-size">--</span>
+        </button>
+        <button class="q-card" data-quality="zip" style="display:none;">
+          <span class="q-badge">All</span>
+          <span class="q-name">ZIP</span><span class="q-size">--</span>
+        </button>
+      </div>
     </div>
 
     <div id="preview" class="preview-box">
-      <div class="thumb-container">
+      <div class="thumb-container" id="main-thumb-container">
         <img id="thumb" alt="Thumbnail">
         <div id="skeleton" class="skeleton-bg"></div>
         <div class="dur-badge" id="duration"></div>
@@ -496,11 +589,15 @@
       <div class="meta-info">
         <h2 class="meta-title" id="title">Loading...</h2>
         <div class="meta-row">
-          <span class="plat-tag" id="platform">VIDEO</span>
+          <span class="plat-tag" id="platform">MEDIA</span>
+          <span class="media-type-tag" id="media-type-badge"></span>
           <span class="author-tag" id="uploader"></span>
         </div>
       </div>
     </div>
+
+    <div id="carousel-view" class="carousel-grid hidden"></div>
+    <div id="carousel-count" class="carousel-count hidden"></div>
 
     <button id="download" class="btn btn-download hidden">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -530,13 +627,13 @@
 </div>
 
 <script>
-/* JS Logic remains identical to original but IDs map to new DOM elements */
 const API_BASE = window.location.origin;
 const $ = id => document.getElementById(id);
 
 let quality = 'best';
 let sizes = {};
 let infoBtnBusy = false;
+let currentMediaType = 'video'; // 'video' | 'image' | 'audio' | 'carousel'
 
 function toast(message, type = '') {
   const t = $('toast');
@@ -562,7 +659,7 @@ function shake(el) {
   el.classList.add('shake');
 }
 
-function duration(s) {
+function formatDuration(s) {
   if (!s) return '';
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -590,6 +687,8 @@ function indeterminateProgress(show = true, text = '') {
 
 function refreshSizes() {
   let hasVisibleOptions = false;
+  let firstVisibleCard = null;
+
   document.querySelectorAll('.q-card').forEach(b => {
     const q = b.dataset.quality;
     if (sizes[q] !== undefined) {
@@ -597,24 +696,29 @@ function refreshSizes() {
       const s = sizes[q] && sizes[q] !== 'Unknown' ? sizes[q] : '';
       b.querySelector('.q-size').textContent = s || '--';
       hasVisibleOptions = true;
-      if (b.classList.contains('active')) {
-         const btnLabel = document.querySelector('#download .btn-text');
-         if (btnLabel) btnLabel.textContent = 'Download Now ' + (s ? `(${s})` : '');
-      }
+      if (!firstVisibleCard) firstVisibleCard = b;
     } else {
       b.style.display = 'none';
       b.classList.remove('active');
     }
   });
 
-  if (!document.querySelector('.q-card.active') && hasVisibleOptions) {
-     const first = document.querySelector('.q-card:not([style*="display: none"])');
-     if (first) {
-       first.classList.add('active');
-       quality = first.dataset.quality;
-       refreshSizes();
-     }
+  // If no card is active (because the previously active one was hidden), pick the first visible
+  const activeCard = document.querySelector('.q-card.active');
+  if (!activeCard && firstVisibleCard) {
+    firstVisibleCard.classList.add('active');
+    quality = firstVisibleCard.dataset.quality;
   }
+
+  // Update download button label based on active card
+  const currentActive = document.querySelector('.q-card.active');
+  if (currentActive && currentActive.style.display !== 'none') {
+    const s = currentActive.querySelector('.q-size').textContent;
+    const btnLabel = document.querySelector('#download .btn-text');
+    if (btnLabel) btnLabel.textContent = 'Download Now' + (s && s !== '--' ? ` (${s})` : '');
+  }
+  
+  $('quality-section').classList.toggle('visible', hasVisibleOptions);
 }
 
 document.querySelectorAll('.q-card').forEach(b => {
@@ -640,6 +744,12 @@ async function request(path, body) {
   return r;
 }
 
+function getMediaTypeIcon(type) {
+  if (type === 'image') return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+  if (type === 'carousel') return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="2" x2="8" y2="22"/></svg>';
+  return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>';
+}
+
 async function fetchInfo() {
   const input = $('url');
   const url = input.value.trim();
@@ -650,17 +760,40 @@ async function fetchInfo() {
   infoBtnBusy = true;
   $('preview').classList.remove('visible');
   $('download').classList.add('hidden');
+  $('quality-section').classList.remove('visible');
+  $('carousel-view').classList.add('hidden');
+  $('carousel-count').classList.add('hidden');
   progress(0, false);
-  toast('Analyzing video link...', 'loading');
+  toast('Analyzing media link...', 'loading');
   indeterminateProgress(true, 'Reading metadata...');
 
   try {
     const data = await (await request('/api/info', { url })).json();
     sizes = data.sizes || {};
+    currentMediaType = data.media_type || 'video';
+    
     refreshSizes();
 
+    // Update quality section label
+    const qLabel = $('quality-label');
+    if (currentMediaType === 'image') {
+      qLabel.textContent = 'Download Format';
+    } else if (currentMediaType === 'carousel') {
+      qLabel.textContent = 'Download Options';
+    } else {
+      qLabel.textContent = 'Select Quality';
+    }
+
+    // Thumbnail
     const thumb = $('thumb');
+    const thumbContainer = $('main-thumb-container');
     thumb.classList.remove('loaded');
+    thumbContainer.classList.remove('hidden', 'photo-mode');
+
+    if (currentMediaType === 'image') {
+      thumbContainer.classList.add('photo-mode');
+    }
+
     if (data.thumbnail) {
       $('skeleton').classList.remove('hide');
       thumb.onload = () => { thumb.classList.add('loaded'); $('skeleton').classList.add('hide'); };
@@ -671,19 +804,102 @@ async function fetchInfo() {
       thumb.removeAttribute('src');
     }
 
-    const isPhoto = !!data.sizes.photo && !data.sizes.best && !data.sizes['1080p'];
-    
-    let titleStr = data.title || 'Untitled video';
-    if (isPhoto && titleStr === 'Untitled video') titleStr = 'Photo Post';
+    // Title
+    let titleStr = data.title || 'Untitled';
+    if (currentMediaType === 'image' && titleStr === 'Untitled') titleStr = 'Photo Post';
+    if (currentMediaType === 'carousel' && titleStr === 'Untitled') titleStr = 'Multi-Photo Post';
     $('title').textContent = titleStr;
     
-    $('duration').textContent = isPhoto ? 'PHOTO' : duration(data.duration);
+    // Duration badge
+    const durBadge = $('duration');
+    durBadge.classList.remove('photo-badge');
+    if (currentMediaType === 'image') {
+      durBadge.textContent = '📷 PHOTO';
+      durBadge.classList.add('photo-badge');
+    } else if (currentMediaType === 'carousel') {
+      const count = (data.entries || []).length;
+      durBadge.textContent = `📷 ${count} items`;
+      durBadge.classList.add('photo-badge');
+    } else if (data.duration) {
+      durBadge.textContent = formatDuration(data.duration);
+    } else {
+      durBadge.textContent = '';
+    }
+
+    // Uploader
     $('uploader').textContent = data.uploader || '';
     $('uploader').style.display = data.uploader ? '' : 'none';
 
+    // Platform badge
     const badge = $('platform');
     badge.textContent = data.platform || 'MEDIA';
     badge.className = 'plat-tag ' + (data.platform || '').toLowerCase();
+
+    // Media type badge
+    const mtBadge = $('media-type-badge');
+    let mtLabel = currentMediaType === 'image' ? 'Photo' : currentMediaType === 'carousel' ? 'Carousel' : currentMediaType === 'audio' ? 'Audio' : 'Video';
+    mtBadge.innerHTML = getMediaTypeIcon(currentMediaType) + ' ' + mtLabel;
+    mtBadge.className = 'media-type-tag ' + (currentMediaType === 'carousel' ? 'carousel' : currentMediaType === 'image' ? 'image' : 'video');
+
+    // Carousel view
+    const carouselView = $('carousel-view');
+    const carouselCount = $('carousel-count');
+    carouselView.innerHTML = '';
+    
+    if (data.entries && data.entries.length > 0) {
+      carouselView.classList.remove('hidden');
+      if (data.entries.length > 1) {
+        thumbContainer.classList.add('hidden');
+      }
+      
+      data.entries.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'carousel-item';
+        const typeIcon = item.is_image 
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+        
+        const img = document.createElement('img');
+        img.src = item.thumbnail || '';
+        img.loading = 'lazy';
+        img.onerror = function() { this.style.background = '#1a1025'; };
+        
+        const indexBadge = document.createElement('div');
+        indexBadge.className = 'carousel-index';
+        indexBadge.textContent = idx + 1;
+        
+        const typeBadge = document.createElement('div');
+        typeBadge.className = 'carousel-badge';
+        typeBadge.innerHTML = typeIcon + ' ' + (item.is_image ? 'Photo' : 'Video');
+        
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'carousel-dl-btn';
+        dlBtn.title = 'Download item ' + (idx + 1);
+        dlBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+        dlBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          startDownload(item.id, item.is_image);
+        });
+        
+        div.appendChild(img);
+        div.appendChild(indexBadge);
+        div.appendChild(typeBadge);
+        div.appendChild(dlBtn);
+        carouselView.appendChild(div);
+      });
+      
+      carouselCount.textContent = `${data.entries.length} items in this post · Hover to download individually or use ZIP for all`;
+      carouselCount.classList.remove('hidden');
+      
+      // Update zip button label
+      const zipBtn = document.querySelector('.q-card[data-quality="zip"]');
+      if (zipBtn) {
+        zipBtn.querySelector('.q-name').textContent = `All (${data.entries.length})`;
+      }
+    } else {
+      carouselView.classList.add('hidden');
+      carouselCount.classList.add('hidden');
+    }
 
     $('preview').classList.add('visible');
     $('download').classList.remove('hidden');
@@ -698,17 +914,28 @@ async function fetchInfo() {
   }
 }
 
-async function startDownload() {
+async function startDownload(itemId = null, isImage = false) {
   const url = $('url').value.trim();
   if (!url) return;
 
   const btn = $('download');
-  setLoading(btn, true);
+  if (!itemId) setLoading(btn, true);
   progress(0, true, 'Initializing server...');
   toast('Preparing your file...', 'loading');
 
+  // Determine the right quality for individual carousel items
+  let targetQuality;
+  if (itemId) {
+    targetQuality = isImage ? 'photo' : 'best';
+  } else {
+    targetQuality = quality;
+  }
+  
+  const body = { url, quality: targetQuality };
+  if (itemId) body.playlist_item = parseInt(itemId, 10);
+
   try {
-    const { task_id } = await (await request('/api/download', { url, quality })).json();
+    const { task_id } = await (await request('/api/download', body)).json();
 
     await new Promise((resolve) => {
       const poll = setInterval(async () => {
@@ -753,12 +980,12 @@ async function startDownload() {
     progress(0, false);
     toast(e.message, 'error');
   } finally {
-    setLoading(btn, false);
+    if (!itemId) setLoading($('download'), false);
   }
 }
 
-$('infoBtn').onclick = fetchInfo;
-$('download').onclick = startDownload;
+$('infoBtn').onclick = () => fetchInfo();
+$('download').onclick = () => startDownload();
 $('url').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !infoBtnBusy) fetchInfo();
 });
@@ -785,7 +1012,6 @@ function confetti() {
     el.style.borderRadius = '4px';
     el.style.opacity = '0.9';
     
-    // Add custom animation for each piece
     el.animate([
       { transform: 'translateY(0) rotate(0deg)' },
       { transform: `translateY(110vh) rotate(${500 + Math.random() * 500}deg)` }

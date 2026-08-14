@@ -15,6 +15,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+class QuietLogger:
+    def debug(self, msg): pass
+    def warning(self, msg): pass
+    def error(self, msg): pass
+    
 app = FastAPI(title="MySaver API")
 
 app.add_middleware(
@@ -280,6 +285,7 @@ async def get_media_info(request: MediaRequest):
             "ignoreerrors": True,
             "ignore_no_formats_error": True,
             "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
+            "logger": QuietLogger(),
         }
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -377,6 +383,7 @@ def _download_single_item(entry: dict, dest_dir: str, prefix: str, task_id: str 
                 "ignoreerrors": True,
                 "merge_output_format": "mp4",
                 "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
+                "logger": QuietLogger(),
             }
             try:
                 with yt_dlp.YoutubeDL(vid_opts) as ydl:
@@ -432,6 +439,7 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
                 "ignoreerrors": True,
                 "ignore_no_formats_error": True,
                 "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
+                "logger": QuietLogger(),
             }
             with yt_dlp.YoutubeDL(info_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -499,6 +507,7 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
                 "ignoreerrors": True,
                 "ignore_no_formats_error": True,
                 "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
+                "logger": QuietLogger(),
             }
             if playlist_item:
                 extract_opts["playlist_items"] = str(playlist_item)
@@ -561,6 +570,7 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
             "noplaylist": True,
             "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
             "progress_hooks": [hook],
+            "logger": QuietLogger(),
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
@@ -581,6 +591,7 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
             "http_chunk_size": 10485760,
             "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
             "progress_hooks": [hook],
+            "logger": QuietLogger(),
         }
 
     # For carousel item video download, we need playlist mode

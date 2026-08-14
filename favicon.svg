@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="50%" stop-color="#843dff" />
+      <stop offset="100%" stop-color="#ff2a85" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#843dff" />
+      <stop offset="100%" stop-color="#ff2a85" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#030108" />
+  <!-- Glowing subtle inner fill -->
+  <rect x="2" y="2" width="508" height="508" rx="126" fill="url(#grad2)" opacity="0.1" />
+  <!-- Border -->
+  <rect x="12" y="12" width="488" height="488" rx="116" fill="none" stroke="url(#grad2)" stroke-width="12" opacity="0.8" />
+  <!-- Download Arrow -->
+  <g filter="url(#glow)">
+    <path d="M256 130 V320 M150 214 L256 320 L362 214" fill="none" stroke="url(#grad1)" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M140 400 H372" fill="none" stroke="url(#grad1)" stroke-width="48" stroke-linecap="round" />
+  </g>
+</svg>
