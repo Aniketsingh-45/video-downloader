@@ -235,19 +235,46 @@ def estimate_sizes(formats, info):
 
 
 def get_format_string(quality: str) -> str:
-    formats = {
-        "4k": "bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/best[height<=2160][ext=mp4]/best",
-        "1440p": "bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[height<=1440][ext=mp4]",
-        "1080p": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]",
-        "best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "720p": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]",
-        "480p": "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]",
-        "360p": "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]",
-        "240p": "bestvideo[height<=240][ext=mp4]+bestaudio[ext=m4a]/best[height<=240][ext=mp4]",
-        "144p": "bestvideo[height<=144][ext=mp4]+bestaudio[ext=m4a]/best[height<=144][ext=mp4]",
-        "audio": "bestaudio[ext=m4a]/bestaudio",
+    height_map = {
+        "4k": 2160,
+        "1440p": 1440,
+        "1080p": 1080,
+        "720p": 720,
+        "480p": 480,
+        "360p": 360,
+        "240p": 240,
+        "144p": 144,
     }
-    return formats.get(quality, formats["best"])
+    if quality in height_map:
+        h = height_map[quality]
+        return f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+    if quality == "audio":
+        return "bestaudio/best"
+    return "bestvideo+bestaudio/best"
+
+
+def _get_base_ydl_opts() -> dict:
+    """Return standard robust YoutubeDL options with JS challenge solver, retries, and headers."""
+    cookie_file = os.path.join(BASE_DIR, "cookies.txt")
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "js_runtimes": {"node": {}},
+        "remote_components": {"ejs:github"},
+        "retries": 10,
+        "fragment_retries": 10,
+        "file_access_retries": 3,
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Fetch-Mode": "navigate",
+        },
+        "logger": QuietLogger(),
+    }
+    if os.path.isfile(cookie_file):
+        opts["cookiefile"] = cookie_file
+    return opts
 
 
 def friendly_error(message: str) -> str:
@@ -260,7 +287,7 @@ def friendly_error(message: str) -> str:
     if "Sign in" in msg or "login" in msg.lower() or "cookies" in msg.lower():
         return "This content requires login. Only public posts can be downloaded."
     if "HTTP Error 403" in msg or "403" in msg:
-        return "Access denied. The content may be private or require login."
+        return "Access denied (HTTP 403). The platform is restricting direct download. Try another quality or add cookies.txt."
     if "HTTP Error 404" in msg or "404" in msg:
         return "Content not found. The link may have been removed."
     if "empty media response" in msg.lower():
@@ -277,16 +304,13 @@ async def get_media_info(request: MediaRequest):
     """Fetch title, thumbnail, duration and available sizes for a link."""
     try:
         url = validate_url(request.url)
-        opts = {
-            "quiet": True,
-            "no_warnings": True,
+        opts = _get_base_ydl_opts()
+        opts.update({
             "noplaylist": False,
             "playlistend": 30,
             "ignoreerrors": True,
             "ignore_no_formats_error": True,
-            "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
-            "logger": QuietLogger(),
-        }
+        })
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
@@ -376,19 +400,16 @@ def _download_single_item(entry: dict, dest_dir: str, prefix: str, task_id: str 
     if _has_video_formats(entry):
         entry_url = entry.get("webpage_url") or entry.get("url") or entry.get("original_url", "")
         if entry_url:
-            vid_opts = {
+            vid_opts = _get_base_ydl_opts()
+            vid_opts.update({
                 "outtmpl": os.path.join(dest_dir, f"{safe_title}.%(ext)s"),
                 "format": "bestvideo+bestaudio/best",
-                "quiet": True,
-                "no_warnings": True,
                 "noplaylist": True,
                 "ignoreerrors": True,
                 "merge_output_format": "mp4",
-                "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
-                "logger": QuietLogger(),
                 "skip_download": False,
                 "writethumbnail": False,
-            }
+            })
             try:
                 with yt_dlp.YoutubeDL(vid_opts) as ydl:
                     ydl.extract_info(entry_url, download=True)
@@ -397,6 +418,22 @@ def _download_single_item(entry: dict, dest_dir: str, prefix: str, task_id: str 
                     if f.startswith(safe_title):
                         return True
             except Exception as e:
+                try:
+                    fallback_opts = _get_base_ydl_opts()
+                    fallback_opts.update({
+                        "outtmpl": os.path.join(dest_dir, f"{safe_title}.%(ext)s"),
+                        "format": "best[ext=mp4]/best",
+                        "noplaylist": True,
+                        "ignoreerrors": True,
+                        "merge_output_format": "mp4",
+                    })
+                    with yt_dlp.YoutubeDL(fallback_opts) as ydl_fb:
+                        ydl_fb.extract_info(entry_url, download=True)
+                    for f in os.listdir(dest_dir):
+                        if f.startswith(safe_title):
+                            return True
+                except Exception:
+                    pass
                 print(f"[MySaver] Video DL failed for {safe_title}: {e}")
 
     # Try as image
@@ -435,16 +472,13 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
         try:
             # Step 1: Extract full info for all entries (no download yet)
             _update_task(task_id, message="Analyzing all items…")
-            info_opts = {
-                "quiet": True,
-                "no_warnings": True,
+            info_opts = _get_base_ydl_opts()
+            info_opts.update({
                 "noplaylist": False,
                 "playlistend": 30,
                 "ignoreerrors": True,
                 "ignore_no_formats_error": True,
-                "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
-                "logger": QuietLogger(),
-            }
+            })
             with yt_dlp.YoutubeDL(info_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             info = info or {}
@@ -504,15 +538,12 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
         try:
             _update_task(task_id, message="Extracting media info…")
 
-            extract_opts = {
-                "quiet": True,
-                "no_warnings": True,
+            extract_opts = _get_base_ydl_opts()
+            extract_opts.update({
                 "noplaylist": False,
                 "ignoreerrors": True,
                 "ignore_no_formats_error": True,
-                "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
-                "logger": QuietLogger(),
-            }
+            })
             if playlist_item:
                 extract_opts["playlist_items"] = str(playlist_item)
 
@@ -566,39 +597,32 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
     # ── AUDIO ──
     if quality == "audio":
         ext = "mp3"
-        opts = {
+        opts = _get_base_ydl_opts()
+        opts.update({
             "outtmpl": outtmpl_path,
             "format": "bestaudio/best",
-            "quiet": True,
-            "no_warnings": True,
             "noplaylist": True,
-            "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
             "progress_hooks": [hook],
-            "logger": QuietLogger(),
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
             }]
-        }
+        })
     # ── VIDEO ──
     else:
         ext = "mp4"
-        opts = {
+        format_str = get_format_string(quality)
+        opts = _get_base_ydl_opts()
+        opts.update({
             "outtmpl": outtmpl_path,
-            "format": "bestvideo+bestaudio/best",
-            "quiet": True,
-            "no_warnings": True,
+            "format": format_str,
             "merge_output_format": ext,
             "noplaylist": True,
-            "concurrent_fragment_downloads": 10,
-            "http_chunk_size": 10485760,
-            "extractor_args": {"youtube": ["player_client=android", "player_client=web"]},
             "progress_hooks": [hook],
-            "logger": QuietLogger(),
             "skip_download": False,
             "writethumbnail": False,
-        }
+        })
 
     # For carousel item video download, we need playlist mode
     if playlist_item:
@@ -607,8 +631,31 @@ def _download_worker(task_id: str, url: str, quality: str, playlist_item: Option
 
     try:
         _update_task(task_id, message="Starting download…")
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+        except Exception as dl_err:
+            err_text = str(dl_err)
+            # Resilient fallback: if separate video+audio DASH streams fail with 403 or unavailable format, try progressive single stream
+            if ("403" in err_text or "Forbidden" in err_text or "Requested format" in err_text) and quality != "audio":
+                print(f"[MySaver] Primary stream failed ({err_text}). Retrying with progressive fallback...")
+                _update_task(task_id, message="Retrying with resilient stream…")
+                fallback_opts = _get_base_ydl_opts()
+                fallback_opts.update({
+                    "outtmpl": outtmpl_path,
+                    "format": "best[ext=mp4]/best",
+                    "merge_output_format": ext,
+                    "noplaylist": not bool(playlist_item),
+                    "progress_hooks": [hook],
+                    "skip_download": False,
+                    "writethumbnail": False,
+                })
+                if playlist_item:
+                    fallback_opts["playlist_items"] = str(playlist_item)
+                with yt_dlp.YoutubeDL(fallback_opts) as ydl_fb:
+                    info = ydl_fb.extract_info(url, download=True)
+            else:
+                raise
         info = info or {}
 
         # If we extracted a playlist with a specific item
